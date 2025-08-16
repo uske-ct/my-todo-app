@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createUserProfile, getUserProfile } from '@/lib/supabase/profile';
 import { createGoal, getUserGoals, Goal } from '@/lib/supabase/goals';
@@ -29,14 +29,11 @@ export default function SelfDevelopmentApp({ user }: SelfDevelopmentAppProps) {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'goals' | 'dashboard'>('welcome');
   const [userGoals, setUserGoals] = useState<Goal[]>([]);
 
-  useEffect(() => {
-    initializeUser();
-  }, [user]);
-
-  async function initializeUser() {
+  const initializeUser = useCallback(async () => {
     try {
       // プロフィールを取得
-      let { data: profileData, error } = await getUserProfile(user.id);
+      const { data: profileData, error } = await getUserProfile(user.id);
+      let finalProfileData = profileData;
       
       if (error && error.code === 'PGRST116') {
         // プロフィールが存在しない場合は作成
@@ -49,13 +46,13 @@ export default function SelfDevelopmentApp({ user }: SelfDevelopmentAppProps) {
         if (createError) {
           console.error('プロフィール作成エラー:', createError);
         } else {
-          profileData = newProfile;
+          finalProfileData = newProfile;
           console.log('プロフィールを作成しました:', newProfile);
         }
       }
       
-      if (profileData) {
-        setProfile(profileData);
+      if (finalProfileData) {
+        setProfile(finalProfileData);
         
         // 既存の目標をチェック
         const { data: goalsData } = await getUserGoals(user.id);
@@ -71,7 +68,11 @@ export default function SelfDevelopmentApp({ user }: SelfDevelopmentAppProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user.id, user.email, user.user_metadata?.full_name]);
+
+  useEffect(() => {
+    initializeUser();
+  }, [initializeUser]);
 
   if (loading) {
     return (

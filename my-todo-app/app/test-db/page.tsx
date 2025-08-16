@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function TestDbPage() {
   const [connectionStatus, setConnectionStatus] = useState<string>('接続中...');
-  const [tables, setTables] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
   const supabase = createClient();
 
@@ -17,7 +16,7 @@ export default function TestDbPage() {
     async function testConnection() {
       try {
         // 接続テスト
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('users')
           .select('*')
           .limit(1);
@@ -31,7 +30,6 @@ export default function TestDbPage() {
           }
         } else {
           setConnectionStatus('✅ Supabase接続成功 - データベース準備完了');
-          setTables(data || []);
         }
       } catch (err) {
         setConnectionStatus(`❌ 接続エラー: ${err instanceof Error ? err.message : '不明なエラー'}`);
